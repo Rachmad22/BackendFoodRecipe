@@ -11,13 +11,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bad-words": "^3.0.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-fileupload": "^1.4.0",
     "helmet": "^6.0.1",
     "node-input-validator": "^4.5.1",
     "nodemon": "^2.0.20",
     "postgres": "^3.3.2",
+    "uuid": "^9.0.0",
     "xss-clean": "^0.1.1"
   },
   "devDependencies": {

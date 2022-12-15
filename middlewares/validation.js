@@ -50,7 +50,7 @@ const validateUpdate = (req, res, next) => {
         name: 'required|minLength:5|maxLength:50|nameNotContainPassword',
         email: 'required|minLength:5|maxLength:70|email',
         phone: 'required|minLength:6|maxLength:14|phoneNumber',
-        password: 'required|minLength:8|alphaNumeric'
+        password: 'required|minLength:3|alphaNumeric'
     })
 
     rules.check().then((success)=> {
