@@ -51,7 +51,7 @@ const getRecipes = async (req, res) => {
 
 const postRecipe = async (req, res) => {
     try {
-        const { name, ingredient, photo, videos } = req.body
+        const { name, ingredient, videos } = req.body
 
         const checkDuplicateName = await recipe.getRecipesByName({ name })
 
@@ -98,7 +98,7 @@ const postRecipe = async (req, res) => {
 const editRecipes = async (req, res) => {
     try {
         const { id } = req.params
-        const { name, ingredient, photo, videos } = req.body
+        const { name, ingredient, videos } = req.body
         let file = req.files.photo
         let fileName = `${uuidv4()}-${file.name}`
         let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`

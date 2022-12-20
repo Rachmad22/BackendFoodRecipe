@@ -12,6 +12,8 @@ const port = 5000
 const userRoutes = require('./routes/users')
 const recipeRoutes = require('./routes/recipe')
 const commentRoutes = require('./routes/comment')
+const authRoutes = require('./routes/auth')
+
 
 
 // parse application/x-www-form-urlencoded
@@ -46,6 +48,8 @@ app.use('/users', userRoutes)
 app.use('/recipes', recipeRoutes)
 
 app.use('/comments', commentRoutes)
+
+app.use('/auth', authRoutes)
 
 
 // menjalankan express pada port variable diatas

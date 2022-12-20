@@ -22,8 +22,8 @@ const getCommentsPagination = async (params) =>{
 }
 // get all comments without pagination
 const getAllComments = async (params) =>{
-    const {sort} = params
-    return await db`SELECT*FROM comments ${sort ? db`ORDER BY date DESC` : db`ORDER BY date ASC`
+    const { komen, sort} = params
+    return await db`SELECT*FROM comments WHERE komen = ${komen} ${sort ? db`ORDER BY date DESC` : db`ORDER BY date ASC`
 }`
 }
 
@@ -49,9 +49,9 @@ const updateComments = async (params) => {
 
     return await db`
             UPDATE comments SET
+            "name" = ${name || defaultValue?.name},
             "komen" = ${komen || defaultValue?.komen}
-            "name" = ${name || defaultValue?.name}
-        WHERE "id" = ${id}`;
+        WHERE "id" = ${id}`
 }
 
 // DELETE comments

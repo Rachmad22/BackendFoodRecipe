@@ -131,10 +131,10 @@ const editComment = async (req, res) => {
         const { name, komen } = req.body
 
         const getComment = await comment.getCommentsId({ id })
-
-        if (getComment) {
+console.log(getComment)
+        if (getComment?.length > 0) {
             await comment.updateComments({
-                name, komen,
+                name, komen, id,
                 defaultValue: getComment[0], 
             })
         } else {

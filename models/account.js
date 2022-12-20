@@ -52,11 +52,11 @@ const getUserByName = async (params) => {
 
 // add new user to db
 const addNewUsers = async (params) => {
-  const { name, email, phone, password } = params
+  const { name, email, phone, password, photo } = params
 
   return await db`
-      INSERT INTO account (name, email, password, phone) 
-      VALUES (${name}, ${email}, ${password}, ${phone})
+      INSERT INTO account (name, email, password, phone, photo) 
+      VALUES (${name}, ${email}, ${password}, ${phone}, ${photo})
     `
 }
 

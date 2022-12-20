@@ -51,7 +51,7 @@ const getUsers = async (req, res) => {
 
 const postUsers = async (req, res) => {
     try {
-        const { name, email, phone, password, photo } = req.body
+        const { name, email, phone, password } = req.body
 // tidak boleh ada nama dan email yg sama
         const checkDuplicateName = await account.getUserByName({ name })
 
@@ -59,10 +59,9 @@ const postUsers = async (req, res) => {
 
         if (checkDuplicateEmail.length >= 1 || checkDuplicateName.length >= 1) {
             throw { code: 401, message: 'Registered Name & Email' }
-
         }
-        // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
         let file = req.files.photo
+        console.log(file)
         let fileName = `${uuidv4()}-${file.name}`
         let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
         let mimeType = file.mimetype.split('/')[1]
@@ -81,7 +80,7 @@ const postUsers = async (req, res) => {
                 if (err) {
                     throw 'fail to upload photo'
                 }
-// authentic the password
+// hash the password
                 bcrypt.hash(password, saltRounds, async (err, hash) => {
                     if (err) {
                         throw 'fail to authentic, please try again...'
@@ -117,7 +116,7 @@ const postUsers = async (req, res) => {
 const editUsers = async (req, res) => {
     try {
         const { id } = req.params
-        const { name, email, phone, password, photo } = req.body
+        const { name, email, phone, password } = req.body
         let file = req.files.photo
         let fileName = `${uuidv4()}-${file.name}`
         let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
