@@ -23,6 +23,14 @@ const getUserById = async (params) => {
   return await db`
   SELECT * FROM account WHERE id = ${id}`
 }
+// get user by email
+const getUserEmail = async (params) => {
+  const { email } = params
+
+  return await db`
+      SELECT * FROM account WHERE email = ${email}
+    `
+}
 
 // get selected users by name
 const getUserByEmail = async (params) => {
@@ -55,7 +63,6 @@ const addNewUsers = async (params) => {
 // update user
 const updateUser = async (params) => {
   const { name, email, phone, password, photo, id, defaultValue } = params
-
   return await db`
     UPDATE account SET
       "name" = ${name || defaultValue?.name},
@@ -81,6 +88,7 @@ const deleteUserById = async (params) => {
 module.exports = {
   getAllUsersPagination,
   getUserByEmail,
+  getUserEmail,
   getAllUsers,
   getUserById,
   getUserByName,

@@ -1,11 +1,11 @@
 const db = require('../connection')
 // CREATE recipes
 const addNewRecipes = async (params) => {
-    const { name, ingredient, videos } = params
+    const { name, ingredient, photo, videos } = params
 
     return await db`
-    INSERT INTO recipes (name, ingredient, videos) 
-    VALUES (${name}, ${ingredient}, ${videos})
+    INSERT INTO recipes (name, ingredient, photo, videos) 
+    VALUES (${name}, ${ingredient}, ${photo}, ${videos})
     `
 }
 // get recipes by ID
@@ -45,7 +45,6 @@ const getRecipesSort = async (params) => {
 // UPDATE recipes
 const updateRecipes = async (params) => {
     const { id, name, ingredient, photo, videos, defVal } = params
-
     return await db`
     UPDATE recipes SET
             "name" = ${name || defVal?.name},

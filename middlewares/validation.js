@@ -47,13 +47,13 @@ const validateUpdate = (req, res, next) => {
     })
 
     const rules = new Validator(req.body, {
-        name: 'required|minLength:5|maxLength:50|nameNotContainPassword',
-        email: 'required|minLength:5|maxLength:70|email',
-        phone: 'required|minLength:6|maxLength:14|phoneNumber',
-        password: 'required|minLength:3|alphaNumeric'
+        name: 'minLength:5|maxLength:50|nameNotContainPassword',
+        email: 'minLength:5|maxLength:70|email',
+        phone: 'minLength:6|maxLength:14|phoneNumber',
+        password: 'minLength:3|alphaNumeric'
     })
 
-    rules.check().then((success)=> {
+    rules.check().then((success) => {
         if (success) {
             next()
         } else {
@@ -73,7 +73,7 @@ const validateRecipe = (req, res, next) => {
         ingredient: 'required',
     })
 
-    rules.check().then((success)=> {
+    rules.check().then((success) => {
         if (success) {
             next()
         } else {
@@ -92,7 +92,26 @@ const validateEditRecipe = (req, res, next) => {
         name: 'minLength:5|maxLength:50'
     })
 
-    rules.check().then((success)=> {
+    rules.check().then((success) => {
+        if (success) {
+            next()
+        } else {
+            res.status(400).json({
+                status: false,
+                message: rules.errors,
+                data: [],
+            })
+        }
+    })
+}
+
+const validateLogin = (req, res, next) => {
+    const rules = new Validator(req.body, {
+        email: 'required|email',
+        password: 'required',
+    })
+
+    rules.check().then(function (success) {
         if (success) {
             next()
         } else {
@@ -106,4 +125,4 @@ const validateEditRecipe = (req, res, next) => {
 }
 
 
-module.exports = { validateCreate, validateUpdate, validateRecipe, validateEditRecipe }
+module.exports = { validateCreate, validateUpdate, validateRecipe, validateEditRecipe, validateLogin }

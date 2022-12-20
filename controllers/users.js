@@ -1,8 +1,8 @@
 const account = require('../models/account')
 const { v4: uuidv4 } = require('uuid')
 const path = require('path')
-// const bcrypt = require('bcrypt')
-// const saltRounds = 10
+const bcrypt = require('bcrypt')
+const saltRounds = 10
 
 const getUsers = async (req, res) => {
     try {
@@ -52,14 +52,14 @@ const getUsers = async (req, res) => {
 const postUsers = async (req, res) => {
     try {
         const { name, email, phone, password, photo } = req.body
-        
+// tidak boleh ada nama dan email yg sama
         const checkDuplicateName = await account.getUserByName({ name })
-        
+
         const checkDuplicateEmail = await account.getUserByEmail({ email })
-        
+
         if (checkDuplicateEmail.length >= 1 || checkDuplicateName.length >= 1) {
             throw { code: 401, message: 'Registered Name & Email' }
-            
+
         }
         // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
         let file = req.files.photo
@@ -69,9 +69,9 @@ const postUsers = async (req, res) => {
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
         // validate size image
-        // if (file.size > 1048576) {
-        //     throw 'Too large file, max 1mb'
-        // }
+        if (file.size > 1048576) {
+            throw 'Too large file, max 1mb'
+        }
 
         if (allowFile.find((item) => item === mimeType)) {
             // Use the mv() method to place the file somewhere on your server
@@ -81,27 +81,27 @@ const postUsers = async (req, res) => {
                 if (err) {
                     throw 'fail to upload photo'
                 }
+// authentic the password
+                bcrypt.hash(password, saltRounds, async (err, hash) => {
+                    if (err) {
+                        throw 'fail to authentic, please try again...'
+                    }
 
-                // bcrypt.hash(password, saltRounds, async (err, hash) => {
-                //     if (err) {
-                //         throw 'fail to authentic, please try again...'
-                //     }
-
-                    // Store hash in your password DB.
-                    const addToDb = await account.addNewUsers({
-                        name,
-                        email,
-                        phone,
-                        password,
-                        photo: `/images/${fileName}`,
-                    })
-                    res.json({
-                        status: true,
-                        message: 'berhasil di tambah',
-                        data: addToDb,
-                    })
+                // Store hash in your password DB.
+                const addToDb = await account.addNewUsers({
+                    name,
+                    email,
+                    phone,
+                    password: hash,
+                    photo: `/images/${fileName}`,
                 })
-        // })
+                res.json({
+                    status: true,
+                    message: 'Added data',
+                    data: addToDb,
+                })
+            })
+            })
         } else {
             throw 'failed upload photo, format photo only !'
         }
@@ -118,34 +118,45 @@ const editUsers = async (req, res) => {
     try {
         const { id } = req.params
         const { name, email, phone, password, photo } = req.body
-
         let file = req.files.photo
         let fileName = `${uuidv4()}-${file.name}`
-        // let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
-        // let mimeType = file.mimetype.split('/')[1]
-        // let allowFile = ['jpeg', 'jpg', 'png', 'webp']
+        let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
+        let mimeType = file.mimetype.split('/')[1]
+        let allowFile = ['jpeg', 'jpg', 'png', 'webp']
+        if (allowFile.find((item) => item === mimeType)) {
+            file.mv(uploadPath, async (err) => {
+                if (err) {
+                    throw 'fail to upload photo'
+                }
+                bcrypt.hash(password, saltRounds, async (err, hash) => {
+                    if (err) {
+                        throw 'fail to authentic, please try again...'
+                    }
+                const getUser = await account.getUserById({ id })
 
-        const getUser = await account.getUserById({ id })
+                if (getUser?.length > 0) {
+                    await account.updateUser({
+                        name,
+                        email,
+                        phone,
+                        password: hash,
+                        photo: `/images/${fileName}`,
+                        id,
+                        defaultValue: getUser[0]
+                    })
+                } else {
+                    throw 'ID not registered'
+                }
 
-        if (getUser) {
-            await account.updateUser({
-                name,
-                email,
-                phone,
-                password,
-                photo:`/images/${fileName}`,
-                id,
-                defaultValue: getUser[0], // default value if input not add in postman
+                res.json({
+                    status: true,
+                    message: 'Edited data',
+                })
             })
-        } else {
-            throw 'ID not registered'
         }
-
-        res.json({
-            status: true,
-            message: 'berhasil di ubah',
-        })
-    } catch (error) {
+        )
+        }
+    }catch (error) {
         res.status(500).json({
             status: false,
             message: error?.message ?? error,
