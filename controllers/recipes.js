@@ -1,6 +1,7 @@
 const recipe = require('../models/recipe')
 const { v4: uuidv4 } = require('uuid')
 const path = require('path')
+const { connect } = require('../middlewares/redis')
 
 // READ recipes by name
 const getRecipes = async (req, res) => {
@@ -10,10 +11,11 @@ const getRecipes = async (req, res) => {
 
         if (name) {
             const getSelectedRecipe = await recipe.getRecipesByName({ name, sort })
+            connect.set('data', JSON.stringify(getSelectedRecipe), 'ex', 10)
 
             res.status(200).json({
                 status: true,
-                message: 'data berhasil di ambil',
+                message: 'data taken',
                 total: getSelectedRecipe.length,
                 data: getSelectedRecipe,
             })
@@ -26,11 +28,16 @@ const getRecipes = async (req, res) => {
             } else {
                 getAll = await recipe.getRecipesSort({ sort })
             }
+            connect.set('data', JSON.stringify(getAll), 'ex', 10)
+            connect.set('total', getAll?.length, 'ex', 10)
+            connect.set('page', page, 'ex', 10)
+            connect.set('limit', limit, 'ex', 10)
+            connect.set('is_paginate', "true", 'ex', 10)
 
             if (getAll.length > 0) {
                 res.status(200).json({
                     status: true,
-                    message: 'data berhasil di ambil',
+                    message: 'data taken',
                     total: getAll?.length,
                     page: page,
                     limit: limit,

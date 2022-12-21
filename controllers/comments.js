@@ -1,22 +1,29 @@
 const comment = require('../models/comment')
+const { connect } = require('../middlewares/redis')
 
 // READ comment by name
 const getComment = async (req, res) => {
     try {
-        const { name } = req.params // /data/:id
-        const { page, limit, sort } = req.query // ?page=1&limit=5
+        const { name } = req.params 
+        const { page, limit, sort } = req.query 
 
         if (name) {
             const getSelectedName = await comment.getCommentsName({ name, page, limit, sort })
+            connect.set('data', JSON.stringify(getSelectedName), 'ex', 10)
+            connect.set('total', getSelectedName?.length, 'ex', 10)
+            connect.set('page', page, 'ex', 10)
+            connect.set('limit', limit, 'ex', 10)
+            connect.set('is_paginate', "true", 'ex', 10)
 
-            res.status(200).json({
-                status: true,
-                message: 'data berhasil di ambil',
-                total: getSelectedName?.length,
-                page: page,
-                limit: limit,
-                data: getSelectedName,
-            })
+            if (getSelectedName.length > 0) {
+                res.status(200).json({
+                    status: true,
+                    message: 'data taken',
+                    total: getSelectedName?.length,
+                    page: page,
+                    limit: limit,
+                    data: getSelectedName,
+                })
         } else {
             // OFFSET & LIMIT
             let getAllComm
@@ -26,11 +33,16 @@ const getComment = async (req, res) => {
             } else {
                 getAllComm = await comment.getAllComments({ sort })
             }
+            connect.set('data', JSON.stringify(getAllComm), 'ex', 10)
+            connect.set('total', getAllComm?.length, 'ex', 10)
+            connect.set('page', page, 'ex', 10)
+            connect.set('limit', limit, 'ex', 10)
+            connect.set('is_paginate', "true", 'ex', 10)
 
             if (getAllComm.length > 0) {
                 res.status(200).json({
                     status: true,
-                    message: 'data berhasil di ambil',
+                    message: 'data taken',
                     total: getAllComm?.length,
                     page: page,
                     limit: limit,
@@ -40,7 +52,8 @@ const getComment = async (req, res) => {
                 throw 'Data kosong silahkan coba lagi'
             }
         }
-    } catch (error) {
+    }
+} catch (error) {
         res.status(500).json({
             status: false,
             message: error?.message ?? error,

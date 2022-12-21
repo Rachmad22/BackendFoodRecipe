@@ -1,6 +1,7 @@
 const account = require('../models/account')
 const { v4: uuidv4 } = require('uuid')
 const path = require('path')
+const { connect } = require('../middlewares/redis')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
 
@@ -11,10 +12,11 @@ const getUsers = async (req, res) => {
 
         if (name) {
             const getSelectedUser = await account.getUserByName({ name })
+            connect.set('data', JSON.stringify(getSelectedUser), 'ex', 10)
 
             res.status(200).json({
                 status: true,
-                message: 'data berhasil di ambil',
+                message: 'Data taken',
                 data: getSelectedUser,
             })
         } else {
@@ -26,11 +28,16 @@ const getUsers = async (req, res) => {
             } else {
                 getAllUser = await account.getAllUsers({ sort })
             }
+            connect.set('data', JSON.stringify(getAllUser), 'ex', 10)
+            connect.set('total', getAllUser?.length, 'ex', 10)
+            connect.set('page', page, 'ex', 10)
+            connect.set('limit', limit, 'ex', 10)
+            connect.set('is_paginate', "true", 'ex', 10)
 
-            if (getAllUser.length > 0) {
+            if (getAllUser?.length > 0) {
                 res.status(200).json({
                     status: true,
-                    message: 'data berhasil di ambil',
+                    message: 'Data taken',
                     total: getAllUser?.length,
                     page: page,
                     limit: limit,
