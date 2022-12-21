@@ -1,9 +1,9 @@
 const account = require('../models/account')
 const { v4: uuidv4 } = require('uuid')
-const path = require('path')
 const { connect } = require('../middlewares/redis')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
+const { cloudinary } = require('../helper')
 
 const getUsers = async (req, res) => {
     try {
@@ -13,6 +13,7 @@ const getUsers = async (req, res) => {
         if (name) {
             const getSelectedUser = await account.getUserByName({ name })
             connect.set('data', JSON.stringify(getSelectedUser), 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
 
             res.status(200).json({
                 status: true,
@@ -32,6 +33,7 @@ const getUsers = async (req, res) => {
             connect.set('total', getAllUser?.length, 'ex', 10)
             connect.set('page', page, 'ex', 10)
             connect.set('limit', limit, 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
             connect.set('is_paginate', "true", 'ex', 10)
 
             if (getAllUser?.length > 0) {
@@ -59,7 +61,7 @@ const getUsers = async (req, res) => {
 const postUsers = async (req, res) => {
     try {
         const { name, email, phone, password } = req.body
-// tidak boleh ada nama dan email yg sama
+        // tidak boleh ada nama dan email yg sama
         const checkDuplicateName = await account.getUserByName({ name })
 
         const checkDuplicateEmail = await account.getUserByEmail({ email })
@@ -68,9 +70,6 @@ const postUsers = async (req, res) => {
             throw { code: 401, message: 'Registered Name & Email' }
         }
         let file = req.files.photo
-        console.log(file)
-        let fileName = `${uuidv4()}-${file.name}`
-        let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
@@ -80,37 +79,37 @@ const postUsers = async (req, res) => {
         }
 
         if (allowFile.find((item) => item === mimeType)) {
-            // Use the mv() method to place the file somewhere on your server
-            file.mv(uploadPath, async function (err) {
-                // await sharp(file).jpeg({ quality: 20 }).toFile(uploadPath)
-
-                if (err) {
-                    throw 'fail to upload photo'
-                }
-// hash the password
-                bcrypt.hash(password, saltRounds, async (err, hash) => {
-                    if (err) {
-                        throw 'fail to authentic, please try again...'
+            cloudinary.v2.uploader.upload(
+                file.tempFilePath,
+                { public_id: uuidv4() },
+                function (error, result) {
+                    if (error) {
+                        throw 'failed to upload'
                     }
+                    // hash the password
+                    bcrypt.hash(password, saltRounds, async (err, hash) => {
+                        if (err) {
+                            throw 'fail to authentic, please try again...'
+                        }
 
-                // Store hash in your password DB.
-                const addToDb = await account.addNewUsers({
-                    name,
-                    email,
-                    phone,
-                    password: hash,
-                    photo: `/images/${fileName}`,
+                        // Store hash in your password DB.
+                        const addToDb = await account.addNewUsers({
+                            name,
+                            email,
+                            phone,
+                            password: hash,
+                            photo: result.url,
+                        })
+                        res.json({
+                            status: true,
+                            message: 'Added data',
+                            data: addToDb,
+                        })
+                    })
                 })
-                res.json({
-                    status: true,
-                    message: 'Added data',
-                    data: addToDb,
-                })
-            })
-            })
-        } else {
-            throw 'failed upload photo, format photo only !'
-        }
+                } else {
+                    throw 'failed upload photo, format photo only !'
+                }
     } catch (error) {
         res.status(error?.code ?? 500).json({
             status: false,
@@ -124,45 +123,53 @@ const editUsers = async (req, res) => {
     try {
         const { id } = req.params
         const { name, email, phone, password } = req.body
+
         let file = req.files.photo
-        let fileName = `${uuidv4()}-${file.name}`
-        let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
+
+        // validate size image
+        if (file.size > 1048576) {
+            throw 'Too large file, max 1mb'
+        }
+
         if (allowFile.find((item) => item === mimeType)) {
-            file.mv(uploadPath, async (err) => {
-                if (err) {
-                    throw 'fail to upload photo'
-                }
-                bcrypt.hash(password, saltRounds, async (err, hash) => {
-                    if (err) {
-                        throw 'fail to authentic, please try again...'
+            cloudinary.v2.uploader.upload(
+                file.tempFilePath,
+                { public_id: uuidv4() },
+                function (error, result) {
+                    if (error) {
+                        throw 'failed to upload'
                     }
-                const getUser = await account.getUserById({ id })
+                    // hash the password
+                    bcrypt.hash(password, saltRounds, async (err, hash) => {
+                        if (err) {
+                            throw 'fail to authentic, please try again...'
+                        }
+                        const getUser = await account.getUserById({ id })
+                        
+                        if (getUser?.length > 0) {
+                            await account.updateUser({
+                                name,
+                                email,
+                                phone,
+                                password: hash,
+                                photo: result.url,
+                                id,
+                                defaultValue: getUser[0]
+                            })
+                        } else {
+                            throw 'ID not registered'
+                        }
 
-                if (getUser?.length > 0) {
-                    await account.updateUser({
-                        name,
-                        email,
-                        phone,
-                        password: hash,
-                        photo: `/images/${fileName}`,
-                        id,
-                        defaultValue: getUser[0]
+                        res.json({
+                            status: true,
+                            message: 'Edited data',
+                        })
                     })
-                } else {
-                    throw 'ID not registered'
-                }
-
-                res.json({
-                    status: true,
-                    message: 'Edited data',
                 })
-            })
         }
-        )
-        }
-    }catch (error) {
+    } catch (error) {
         res.status(500).json({
             status: false,
             message: error?.message ?? error,

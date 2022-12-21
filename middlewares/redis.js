@@ -2,9 +2,9 @@ require('dotenv').config()
 const Redis = require('ioredis')
 
 const connect = new Redis({
-    host: 'redis-15690.c1.ap-southeast-1-1.ec2.cloud.redislabs.com',
-    port: 15690,
-    password: '0kctKq8AjbUUCg2Bs7EHmWX3BowhJFaO'
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASS
 });
 const useRedis = async (req, res, next) => {
     try {
@@ -13,8 +13,10 @@ const useRedis = async (req, res, next) => {
         const total = await connect.get('total')
         const limit = await connect.get('limit')
         const page = await connect.get('page')
+        const url = await connect.get('url')
+        const matchUrl = url === req.originalUrl
 
-        if (data) {
+        if (matchUrl && data) {
             res.status(200).json({
                 status: true,
                 redis: true,

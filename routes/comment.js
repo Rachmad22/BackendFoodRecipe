@@ -9,7 +9,7 @@ router.post('/add', validateToken, commentsCotroller.postComment)
 router.get('/:name?', commentsCotroller.getComment)
 
 // READ comments sort by name & date
-router.get(':komen?', commentsCotroller.getvalComment)
+router.get('/:komen?', commentsCotroller.getvalComment)
 
 // UPDATE comments
 router.patch('/edit/:id?', validateToken, commentsCotroller.editComment)

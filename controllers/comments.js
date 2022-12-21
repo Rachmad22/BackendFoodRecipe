@@ -9,11 +9,6 @@ const getComment = async (req, res) => {
 
         if (name) {
             const getSelectedName = await comment.getCommentsName({ name, page, limit, sort })
-            connect.set('data', JSON.stringify(getSelectedName), 'ex', 10)
-            connect.set('total', getSelectedName?.length, 'ex', 10)
-            connect.set('page', page, 'ex', 10)
-            connect.set('limit', limit, 'ex', 10)
-            connect.set('is_paginate', "true", 'ex', 10)
 
             if (getSelectedName.length > 0) {
                 res.status(200).json({
@@ -33,11 +28,6 @@ const getComment = async (req, res) => {
             } else {
                 getAllComm = await comment.getAllComments({ sort })
             }
-            connect.set('data', JSON.stringify(getAllComm), 'ex', 10)
-            connect.set('total', getAllComm?.length, 'ex', 10)
-            connect.set('page', page, 'ex', 10)
-            connect.set('limit', limit, 'ex', 10)
-            connect.set('is_paginate', "true", 'ex', 10)
 
             if (getAllComm.length > 0) {
                 res.status(200).json({

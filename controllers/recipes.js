@@ -1,7 +1,7 @@
 const recipe = require('../models/recipe')
 const { v4: uuidv4 } = require('uuid')
-const path = require('path')
 const { connect } = require('../middlewares/redis')
+const { cloudinary } = require('../helper')
 
 // READ recipes by name
 const getRecipes = async (req, res) => {
@@ -12,6 +12,7 @@ const getRecipes = async (req, res) => {
         if (name) {
             const getSelectedRecipe = await recipe.getRecipesByName({ name, sort })
             connect.set('data', JSON.stringify(getSelectedRecipe), 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
 
             res.status(200).json({
                 status: true,
@@ -32,6 +33,7 @@ const getRecipes = async (req, res) => {
             connect.set('total', getAll?.length, 'ex', 10)
             connect.set('page', page, 'ex', 10)
             connect.set('limit', limit, 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
             connect.set('is_paginate', "true", 'ex', 10)
 
             if (getAll.length > 0) {
@@ -44,7 +46,7 @@ const getRecipes = async (req, res) => {
                     data: getAll,
                 })
             } else {
-                throw 'Data kosong silahkan coba lagi'
+                throw 'Data not found, try again please..'
             }
         }
     } catch (error) {
@@ -66,8 +68,6 @@ const postRecipe = async (req, res) => {
             throw { code: 401, message: 'Registered Name' }
         }
         let file = req.files.photo
-        let fileName = `${uuidv4()}-${file.name}`
-        let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
@@ -77,12 +77,16 @@ const postRecipe = async (req, res) => {
         }
 
         if (allowFile.find((item) => item === mimeType)) {
-            // Use the mv() method to place the file somewhere on your server
-            file.mv(uploadPath, async function (err) {
-                if (err) {
-                    throw 'fail to upload photo'
-                }
-                const addToDb = await recipe.addNewRecipes({ name, ingredient, photo: `/images/${fileName}`, videos })
+            cloudinary.v2.uploader.upload(
+                file.tempFilePath,
+                { public_id : uuidv4() },
+                async (error, result)=>{
+                    if(error){
+                        throw 'failed to upload'
+                    }
+                const addToDb = await recipe.addNewRecipes({ 
+                    name, ingredient,
+                    photo: result.url, videos })
 
                 res.json({
                     status: true,
@@ -107,8 +111,6 @@ const editRecipes = async (req, res) => {
         const { id } = req.params
         const { name, ingredient, videos } = req.body
         let file = req.files.photo
-        let fileName = `${uuidv4()}-${file.name}`
-        let uploadPath = `${path.dirname(require.main.filename)}/public/${fileName}`
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
@@ -118,16 +120,19 @@ const editRecipes = async (req, res) => {
         }
 
         if (allowFile.find((item) => item === mimeType)) {
-            file.mv(uploadPath, async (err) => {
-                if (err) {
-                    throw 'fail to upload photo'
-                }
+            cloudinary.v2.uploader.upload(
+                file.tempFilePath,
+                { public_id : uuidv4() },
+                async (error, result) => {
+                    if(error){
+                        throw 'failed to upload'
+                    }
                 const getRecipe = await recipe.getRecipesById({ id })
                 if (getRecipe?.length > 0) {
                     await recipe.updateRecipes({
                         id,
                         name, ingredient,
-                        photo : `/images/${fileName}`,
+                        photo : result.url,
                         videos,
                         defVal: getRecipe[0],
                     })
