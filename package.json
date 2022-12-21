@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "standard",
+    "dev" : "nodemon index.js",
     "start": "node index.js",
     "fix": "standard --fix"
   },
