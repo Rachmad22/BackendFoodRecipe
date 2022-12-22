@@ -51,6 +51,12 @@ app.use('/comments', commentRoutes)
 
 app.use('/auth', authRoutes)
 
+app.get({
+  status: true,
+  message: 'Server running',
+  version: '1.0.0'
+})
+
 
 // menjalankan express pada port variable diatas
 app.listen(port, () => {
