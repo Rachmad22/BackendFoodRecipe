@@ -128,6 +128,10 @@ const editUsers = async (req, res) => {
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
+        if (file.length === 0){
+            throw 'photo cant null'
+        }
+
         // validate size image
         if (file.size > 1048576) {
             throw 'Too large file, max 1mb'

@@ -9,8 +9,6 @@ const validateCreate = (req, res, next) => {
     })
 
     addCustomMessages({
-        'name.required': 'Nama tidak boleh kosong',
-        'name.minLength': 'minimal 5 huruf',
         'name.nameNotContainPassword': 'Nama tidak boleh mengandung password',
     })
 
@@ -50,6 +48,7 @@ const validateUpdate = (req, res, next) => {
         name: 'minLength:5|maxLength:50|nameNotContainPassword',
         email: 'minLength:5|maxLength:70|email',
         phone: 'minLength:6|maxLength:14|phoneNumber',
+        photo: 'required|size:1mb',
         password: 'minLength:3|alphaNumeric'
     })
 
