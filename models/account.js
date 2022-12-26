@@ -50,6 +50,14 @@ const getUserByName = async (params) => {
     `
 }
 
+// add new user without photo
+const addUser = async (params) =>{
+  const { name, email, phone, password } = params
+  return await db`
+  INSERT INTO account (name, email, password, phone)
+  VALUES (${name}, ${email}, ${phone}, ${password})`
+}
+
 // add new user to db
 const addNewUsers = async (params) => {
   const { name, email, phone, password, photo } = params
@@ -92,6 +100,7 @@ module.exports = {
   getAllUsers,
   getUserById,
   getUserByName,
+  addUser,
   addNewUsers,
   deleteUserById,
   updateUser,

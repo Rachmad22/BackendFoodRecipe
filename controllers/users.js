@@ -70,46 +70,62 @@ const postUsers = async (req, res) => {
             throw { code: 401, message: 'Registered Name & Email' }
         }
         let file = req.files.photo
-        let mimeType = file.mimetype.split('/')[1]
-        let allowFile = ['jpeg', 'jpg', 'png', 'webp']
-
-        // validate size image
-        if (file.size > 1048576) {
-            throw 'Too large file, max 1mb'
-        }
-
-        if (allowFile.find((item) => item === mimeType)) {
-            cloudinary.v2.uploader.upload(
-                file.tempFilePath,
-                { public_id: uuidv4() },
-                function (error, result) {
-                    if (error) {
-                        throw 'failed to upload'
-                    }
-                    // hash the password
-                    bcrypt.hash(password, saltRounds, async (err, hash) => {
-                        if (err) {
-                            throw 'fail to authentic, please try again...'
+        if (file !== null) {
+            let mimeType = file.mimetype.split('/')[1]
+            let allowFile = ['jpeg', 'jpg', 'png', 'webp']
+            // validate size image
+            if (file.size > 1048576) {
+                throw 'Too large file, max 1mb'
+            }
+            if (allowFile.find((item) => item === mimeType)) {
+                cloudinary.v2.uploader.upload(
+                    file.tempFilePath,
+                    { public_id: uuidv4() },
+                    function (error, result) {
+                        if (error) {
+                            throw 'failed to upload'
                         }
-
-                        // Store hash in your password DB.
-                        const addToDb = await account.addNewUsers({
-                            name,
-                            email,
-                            phone,
-                            password: hash,
-                            photo: result.url,
-                        })
-                        res.json({
-                            status: true,
-                            message: 'Added data',
-                            data: addToDb,
+                        // hash the password
+                        bcrypt.hash(password, saltRounds, async (err, hash) => {
+                            if (err) {
+                                throw 'fail to authentic, please try again...'
+                            }
+                            const addToDb = await account.addNewUsers({
+                                name,
+                                email,
+                                phone,
+                                password: hash,
+                                photo: result.url,
+                            })
+                            res.json({
+                                status: true,
+                                message: 'Added data',
+                                data: addToDb,
+                            })
                         })
                     })
+            } else {
+                throw 'failed upload photo, format photo only !'
+            }
+        }
+        if (!file) {
+            bcrypt.hash(password, saltRounds, async (err, hash) => {
+                const add = await account.addUser({
+                    name,
+                    email,
+                    phone,
+                    password: hash,
                 })
-                } else {
-                    throw 'failed upload photo, format photo only !'
+                if (err) {
+                    throw 'fail to authentic, please try again...'
                 }
+                res.json({
+                    status: true,
+                    message: 'added data',
+                    data: add
+                })
+            })
+        }
     } catch (error) {
         res.status(error?.code ?? 500).json({
             status: false,
@@ -128,50 +144,50 @@ const editUsers = async (req, res) => {
         let mimeType = file.mimetype.split('/')[1]
         let allowFile = ['jpeg', 'jpg', 'png', 'webp']
 
-        if (file.length === 0){
+        if (file.length === 0) {
             throw 'photo cant null'
-        }
+        } else {
+            // validate size image
+            if (file.size > 1048576) {
+                throw 'Too large file, max 1mb'
+            }
 
-        // validate size image
-        if (file.size > 1048576) {
-            throw 'Too large file, max 1mb'
-        }
-
-        if (allowFile.find((item) => item === mimeType)) {
-            cloudinary.v2.uploader.upload(
-                file.tempFilePath,
-                { public_id: uuidv4() },
-                function (error, result) {
-                    if (error) {
-                        throw 'failed to upload'
-                    }
-                    // hash the password
-                    bcrypt.hash(password, saltRounds, async (err, hash) => {
-                        if (err) {
-                            throw 'fail to authentic, please try again...'
+            if (allowFile.find((item) => item === mimeType)) {
+                cloudinary.v2.uploader.upload(
+                    file.tempFilePath,
+                    { public_id: uuidv4() },
+                    function (error, result) {
+                        if (error) {
+                            throw 'failed to upload'
                         }
-                        const getUser = await account.getUserById({ id })
-                        
-                        if (getUser?.length > 0) {
-                            await account.updateUser({
-                                name,
-                                email,
-                                phone,
-                                password: hash,
-                                photo: result.url,
-                                id,
-                                defaultValue: getUser[0]
+                        // hash the password
+                        bcrypt.hash(password, saltRounds, async (err, hash) => {
+                            if (err) {
+                                throw 'fail to authentic, please try again...'
+                            }
+                            const getUser = await account.getUserById({ id })
+
+                            if (getUser?.length > 0) {
+                                await account.updateUser({
+                                    name,
+                                    email,
+                                    phone,
+                                    password: hash,
+                                    photo: result.url,
+                                    id,
+                                    defaultValue: getUser[0]
+                                })
+                            } else {
+                                throw 'ID not registered'
+                            }
+
+                            res.json({
+                                status: true,
+                                message: 'Edited data',
                             })
-                        } else {
-                            throw 'ID not registered'
-                        }
-
-                        res.json({
-                            status: true,
-                            message: 'Edited data',
                         })
                     })
-                })
+            }
         }
     } catch (error) {
         res.status(500).json({
