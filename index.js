@@ -51,13 +51,13 @@ app.use('/comments', commentRoutes)
 
 app.use('/auth', authRoutes)
 
-app.get('/', (req, res) => {
-  res.json({
-    status: true,
-    message: 'Server running',
-    version: '1.0.0'
-  })
-})
+// app.get('/', (req, res) => {
+//   res.json({
+//     status: true,
+//     message: 'Server running',
+//     version: '1.0.0'
+//   })
+// })
 
 
 // menjalankan express pada port variable diatas
