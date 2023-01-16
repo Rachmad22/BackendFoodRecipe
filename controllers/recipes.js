@@ -58,6 +58,61 @@ const getRecipes = async (req, res) => {
     }
 }
 
+// READ recipes by ID
+const getRecipesAll = async (req, res) => {
+    try {
+        // const { id } = req.params
+        const { page, limit, sort } = req.query
+
+        if (sort) {
+            const getSelectedRecipe = await recipe.getAllRecipes({ sort })
+            connect.set('data', JSON.stringify(getSelectedRecipe), 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
+
+            res.status(200).json({
+                status: true,
+                message: 'data taken',
+                total: getSelectedRecipe.length,
+                data: getSelectedRecipe,
+            })
+        } else {
+            // OFFSET & LIMIT
+            let getAll
+
+            if (sort && limit && page) {
+                getAll = await recipe.getRecipesPagination({ sort, limit, page })
+            } else {
+                getAll = await recipe.getRecipesSort({ sort })
+            }
+            connect.set('data', JSON.stringify(getAll), 'ex', 10)
+            connect.set('total', getAll?.length, 'ex', 10)
+            connect.set('page', page, 'ex', 10)
+            connect.set('limit', limit, 'ex', 10)
+            connect.set('url', req.originalUrl, 'ex', 10)
+            connect.set('is_paginate', "true", 'ex', 10)
+
+            if (getAll.length > 0) {
+                res.status(200).json({
+                    status: true,
+                    message: 'data taken',
+                    total: getAll?.length,
+                    page: page,
+                    limit: limit,
+                    data: getAll,
+                })
+            } else {
+                throw 'Data not found, try again please..'
+            }
+        }
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            message: error?.message ?? error,
+            data: [],
+        })
+    }
+}
+
 const postRecipe = async (req, res) => {
     try {
         const { name, ingredient, videos } = req.body
@@ -174,4 +229,4 @@ const deleteRecipes = async (req, res) => {
     }
 }
 
-module.exports = { getRecipes, postRecipe, editRecipes, deleteRecipes }
+module.exports = { getRecipes, getRecipesAll, postRecipe, editRecipes, deleteRecipes }
