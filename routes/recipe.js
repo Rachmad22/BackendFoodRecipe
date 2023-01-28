@@ -10,8 +10,8 @@ router.post('/add', validateToken, validateRecipe, recipesController.postRecipe)
 // READ recipe with sorting name & date
 router.get('/:name?', useRedis, recipesController.getRecipes )
 
-// READ recipe bt ID
-router.get('/', useRedis, recipesController.getAllReci )
+// READ recipe by ID
+router.get('/', useRedis, recipesController.getRecipesAll )
 
 
 // UPDATE recipes
