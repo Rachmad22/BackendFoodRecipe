@@ -1,36 +1,26 @@
 const { Validator, addCustomMessages, extend } = require('node-input-validator')
 
-const validateCreate = (req, res, next) => {
-    extend('nameNotContainPassword', ({ value }) => {
-        if (req.body.name !== req.body.password) {
-            return true
-        }
-        return false
-    })
+const validateCreateUser = (req, res, next) => {
+  const rules = new Validator(req.body, {
+    name: "required|regex:^[a-zA-Z_ ]+$|minLength:5",
+    phone: "required|phoneNumber|minLength:11|maxLength:14",
+    email: "required|email|minLength:5|maxLength:70",
+    password: "required|minLength:8|alphaNumeric",
+    photo: "nullable",
+  });
 
-    addCustomMessages({
-        'name.nameNotContainPassword': 'Nama tidak boleh mengandung password',
-    })
-
-    const rules = new Validator(req.body, {
-        name: 'required|minLength:5|maxLength:50|nameNotContainPassword',
-        email: 'required|minLength:5|maxLength:70|email',
-        phone: 'required|minLength:6|maxLength:14|phoneNumber',
-        password: 'required|minLength:3|alphaNumeric',
-    })
-
-    rules.check().then(function (success) {
-        if (success) {
-            next()
-        } else {
-            res.status(400).json({
-                status: false,
-                message: rules.errors,
-                data: [],
-            })
-        }
-    })
-}
+  rules.check().then(function (success) {
+    if (success) {
+      next();
+    } else {
+      res.status(404).json({
+        status: false,
+        message: rules.errors,
+        data: [],
+      });
+    }
+  });
+};
 
 const validateUpdate = (req, res, next) => {
     extend('nameNotContainPassword', ({ value }) => {
@@ -124,4 +114,4 @@ const validateLogin = (req, res, next) => {
 }
 
 
-module.exports = { validateCreate, validateUpdate, validateRecipe, validateEditRecipe, validateLogin }
+module.exports = { validateCreateUser, validateUpdate, validateRecipe, validateEditRecipe, validateLogin }
