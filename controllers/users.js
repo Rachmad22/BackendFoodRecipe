@@ -71,8 +71,9 @@ const createUser = async (req, res) => {
                 const addToDb = await account.addUser({
                     name,
                     phone,
+                    password: hash,
                     email,
-                    password: hash
+                    
                 })
 
                 res.json({
