@@ -58,6 +58,41 @@ const getUsers = async (req, res) => {
     }
 }
 
+const createUser = async (req, res) => {
+    try {
+        const { name, phone, email, password } = req.body
+
+        bcrypt.genSalt(saltRounds, (err, salt) => {
+            bcrypt.hash(password, salt, async (err, hash) => {
+                if (err) {
+                    throw 'Authentication process failed, please try again'
+                }
+
+                const addToDb = await account.addUser({
+                    name,
+                    phone,
+                    email,
+                    password: hash
+                })
+
+                res.json({
+                    status: true,
+                    message: 'Data added successfully',
+                    data: addToDb
+                })
+            })
+        })
+    }
+    catch (error) {
+        res.status(error?.code ?? 500).json({
+            status: false,
+            message: error?.message ?? error,
+            data: []
+        })
+    }
+}
+
+
 const postUsers = async (req, res) => {
     try {
         const { name, email, phone, password } = req.body
@@ -217,4 +252,4 @@ const deleteUsers = async (req, res) => {
     }
 }
 
-module.exports = { getUsers, postUsers, editUsers, deleteUsers }
+module.exports = { getUsers, postUsers, editUsers, deleteUsers, createUser }
