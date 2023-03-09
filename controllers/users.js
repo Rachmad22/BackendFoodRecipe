@@ -226,9 +226,9 @@ const editUsers = async (req, res) => {
                 const addToDbPhoto = await user.editUserPhoto({
                   id,
                   name,
-                  phone,
                   email,
                   password: hash,
+                  phone,
                   photo: result.url,
                   getUser,
                 });
@@ -258,9 +258,9 @@ const editUsers = async (req, res) => {
           const addToDb = await user.editUser({
             id,
             name,
-            phone,
             email,
             password: hash,
+            phone,
             getUser,
           });
 
