@@ -192,7 +192,7 @@ const editUsers = async (req, res) => {
 
     // Check email, whether already used or not
     if (email) {
-      const checkEmail = await account.getUserEmail({ email });
+      const checkEmail = await account.getEmailUser({ email });
 
       if (checkEmail.length >= 1) {
         throw { code: 401, message: "Email already in use" };
