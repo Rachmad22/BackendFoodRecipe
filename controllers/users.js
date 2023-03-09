@@ -176,7 +176,7 @@ const editUsers = async (req, res) => {
     const { name, phone, email, password } = req.body;
 
     // Check the user id, is there or not
-    const checkUser = await user.getUserById({ id });
+    const checkUser = await account.getUserById({ id });
 
     if (checkUser.length === 0) {
       throw { code: 401, message: `User with id ${id} doesn't exist` };
@@ -184,7 +184,7 @@ const editUsers = async (req, res) => {
 
     // Check phone number, whether already used or not
     if (phone) {
-      const checkPhone = await user.getUserPhone({ phone });
+      const checkPhone = await account.getUserPhone({ phone });
       if (checkPhone.length >= 1) {
         throw { code: 401, message: "Number already in use" };
       }
@@ -192,14 +192,14 @@ const editUsers = async (req, res) => {
 
     // Check email, whether already used or not
     if (email) {
-      const checkEmail = await user.getUserEmail({ email });
+      const checkEmail = await account.getUserEmail({ email });
 
       if (checkEmail.length >= 1) {
         throw { code: 401, message: "Email already in use" };
       }
     }
 
-    const getUser = await user.getUserById({ id });
+    const getUser = await account.getUserById({ id });
 
     if (req.files && req.files.photo) {
       const file = req.files.photo;
@@ -223,7 +223,7 @@ const editUsers = async (req, res) => {
                   throw "Authentication process failed, please try again";
                 }
 
-                const addToDbPhoto = await user.editUserPhoto({
+                const addToDbPhoto = await account.editUserPhoto({
                   id,
                   name,
                   email,
@@ -255,7 +255,7 @@ const editUsers = async (req, res) => {
             throw "Authentication process failed, please try again";
           }
 
-          const addToDb = await user.editUser({
+          const addToDb = await account.editUser({
             id,
             name,
             email,
