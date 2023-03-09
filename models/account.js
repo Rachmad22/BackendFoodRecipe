@@ -16,6 +16,49 @@ const getAllUsers = async (params) => {
     }`
 }
 
+// get user's phone
+const getUserPhone = async (params) => {
+  const { phone } = params;
+
+  return await db`SELECT phone FROM account WHERE phone = ${phone}`;
+};
+
+// get user's email
+const getUserEmail = async (params) => {
+  const { email } = params;
+
+  return await db`SELECT email FROM account WHERE email = ${email}`;
+};
+
+// edit photo's user
+const editUserPhoto = async (params) => {
+  const { id, name, phone, email, password, photo, getUser } =
+    params;
+
+  return await db`
+  UPDATE account SET
+  "name" = ${name || getUser[0]?.name},
+  "email" = ${email || getUser[0]?.email},
+  "password" = ${password || getUser[0]?.password},
+  "phone" = ${phone || getUser[0]?.phone},
+  "photo" = ${photo || getUser[0]?.photo}
+  WHERE "id" = ${id}
+  `;
+};
+
+const editUser = async (params) => {
+  const { id, name, phone, email, password, getUser } = params;
+
+  return await db`
+  UPDATE account SET
+  "name" = ${name || getUser[0]?.name},
+  "email" = ${email || getUser[0]?.email},
+  "password" = ${password || getUser[0]?.password}
+  "phone" = ${phone || getUser[0]?.phone},
+  WHERE "id" = ${id}
+  `;
+};
+
 // get selected users by id
 const getUserById = async (params) => {
   const { id } = params
