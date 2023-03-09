@@ -171,67 +171,115 @@ const postUsers = async (req, res) => {
 }
 
 const editUsers = async (req, res) => {
-    try {
-        const { id } = req.params
-        const { name, email, phone, password } = req.body
+  try {
+    const { id } = req.params;
+    const { name, phone, email, password } = req.body;
 
-        let file = req.files.photo
-        let mimeType = file.mimetype.split('/')[1]
-        let allowFile = ['jpeg', 'jpg', 'png', 'webp']
+    // Check the user id, is there or not
+    const checkUser = await user.getUserById({ id });
 
-        if (file.length === 0) {
-            throw 'photo cant null'
-        } else {
-            // validate size image
-            if (file.size > 1048576) {
-                throw 'Too large file, max 1mb'
-            }
-
-            if (allowFile.find((item) => item === mimeType)) {
-                cloudinary.v2.uploader.upload(
-                    file.tempFilePath,
-                    { public_id: uuidv4() },
-                    function (error, result) {
-                        if (error) {
-                            throw 'failed to upload'
-                        }
-                        // hash the password
-                        bcrypt.hash(password, saltRounds, async (err, hash) => {
-                            if (err) {
-                                throw 'fail to authentic, please try again...'
-                            }
-                            const getUser = await account.getUserById({ id })
-
-                            if (getUser?.length > 0) {
-                                await account.updateUser({
-                                    name,
-                                    email,
-                                    phone,
-                                    password: hash,
-                                    photo: result.url,
-                                    id,
-                                    defaultValue: getUser[0]
-                                })
-                            } else {
-                                throw 'ID not registered'
-                            }
-
-                            res.json({
-                                status: true,
-                                message: 'Edited data',
-                            })
-                        })
-                    })
-            }
-        }
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: error?.message ?? error,
-            data: [],
-        })
+    if (checkUser.length === 0) {
+      throw { code: 401, message: `User with id ${id} doesn't exist` };
     }
-}
+
+    // Check phone number, whether already used or not
+    if (phone) {
+      const checkPhone = await user.getUserPhone({ phone });
+      if (checkPhone.length >= 1) {
+        throw { code: 401, message: "Number already in use" };
+      }
+    }
+
+    // Check email, whether already used or not
+    if (email) {
+      const checkEmail = await user.getUserEmail({ email });
+
+      if (checkEmail.length >= 1) {
+        throw { code: 401, message: "Email already in use" };
+      }
+    }
+
+    const getUser = await user.getUserById({ id });
+
+    if (req.files && req.files.photo) {
+      const file = req.files.photo;
+
+      const mimeType = file.mimetype.split("/")[1];
+
+      const allowedFile = ["jpg", "png", "jpeg", "webp"];
+
+      if (allowedFile.find((item) => item === mimeType)) {
+        cloudinary.v2.uploader.upload(
+          file.tempFilePath,
+          { public_id: uuidv4() },
+          function (error, result) {
+            if (error) {
+              throw "Photo upload failed";
+            }
+
+            bcrypt.genSalt(saltRounds, (err, salt) => {
+              bcrypt.hash(password, salt, async (err, hash) => {
+                if (err) {
+                  throw "Authentication process failed, please try again";
+                }
+
+                const addToDbPhoto = await user.editUserPhoto({
+                  id,
+                  name,
+                  phone,
+                  email,
+                  password: hash,
+                  photo: result.url,
+                  getUser,
+                });
+
+                res.json({
+                  status: true,
+                  message: "User edited successful",
+                  data: addToDbPhoto,
+                });
+              });
+            });
+          }
+        );
+      } else {
+        throw {
+          code: 401,
+          message: "Upload failed, only photo format input",
+        };
+      }
+    } else {
+      bcrypt.genSalt(saltRounds, (err, salt) => {
+        bcrypt.hash(password, salt, async (err, hash) => {
+          if (err) {
+            throw "Authentication process failed, please try again";
+          }
+
+          const addToDb = await user.editUser({
+            id,
+            name,
+            phone,
+            email,
+            password: hash,
+            getUser,
+          });
+
+          res.json({
+            status: true,
+            message: "User edited successful",
+            data: addToDb,
+          });
+        });
+      });
+    }
+  } catch (error) {
+    res.status(error?.code ?? 500).json({
+      status: false,
+      message: error?.message ?? error,
+      data: [],
+    });
+  }
+};
 
 const deleteUsers = async (req, res) => {
     try {
