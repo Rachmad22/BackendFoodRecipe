@@ -66,14 +66,6 @@ const getUserById = async (params) => {
   return await db`
   SELECT * FROM account WHERE id = ${id}`
 }
-// get user by email
-const getUserEmail = async (params) => {
-  const { email } = params
-
-  return await db`
-      SELECT * FROM account WHERE email = ${email}
-    `
-}
 
 // get selected users by name
 const getUserByEmail = async (params) => {
@@ -144,7 +136,6 @@ module.exports = {
   getUserById,
   getUserByName,
   getUserPhone,
-  getUserEmail,
   editUserPhoto,
   editUser,
   addUser,
